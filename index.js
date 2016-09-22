@@ -44,12 +44,12 @@ ExpressOAuthServer.prototype.authenticate = function(options) {
         return server.authenticate(request, response, options);
       })
       .tap(function(token) {
-        res.locals.oauth = { token: token };
+        res.app.locals.oauth = { token: token };
+        next();
       })
       .catch(function(e) {
-        return handleError(e, req, res);
-      })
-      .finally(next);
+        return handleError(e, req, res, response);
+      });
   };
 };
 
@@ -73,15 +73,15 @@ ExpressOAuthServer.prototype.authorize = function(options) {
         return server.authorize(request, response, options);
       })
       .tap(function(code) {
-        res.locals.oauth = { code: code };
+        res.app.locals.oauth = { code: code };
+        next();
       })
       .then(function() {
         return handleResponse(req, res, response);
       })
       .catch(function(e) {
         return handleError(e, req, res, response);
-      })
-      .finally(next);
+      });
   };
 };
 
@@ -105,15 +105,15 @@ ExpressOAuthServer.prototype.token = function(options) {
         return server.token(request, response, options);
       })
       .tap(function(token) {
-        res.locals.oauth = { token: token };
+        res.app.locals.oauth = { token: token };
+        next();
       })
       .then(function() {
         return handleResponse(req, res, response);
       })
       .catch(function(e) {
         return handleError(e, req, res, response);
-      })
-      .finally(next);
+      });
   };
 };
 
