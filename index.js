@@ -137,7 +137,7 @@ var handleError = function(e, req, res, response) {
   	res.status(e.code);
   }
 
-  res.status(e.code).send({ error: e.name, error_description: e.message });
+  res.status(e.code || 500).send({ error: e.name, error_description: e.message });
 };
 
 /**
