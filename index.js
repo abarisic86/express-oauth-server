@@ -20,6 +20,9 @@ function ExpressOAuthServer(options) {
   if (!options.model) {
     throw new InvalidArgumentError('Missing parameter: `model`');
   }
+  
+  this.useErrorHandler = options.useErrorHandler ? true : false;
+  delete options.useErrorHandler;
 
   this.server = new NodeOAuthServer(options);
 }
