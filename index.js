@@ -51,7 +51,7 @@ ExpressOAuthServer.prototype.authenticate = function(options) {
         next();
       })
       .catch(function(e) {
-        return handleError(e, req, res, response);
+        return handleError(e, req, res, null, next);
       });
   };
 };
@@ -113,7 +113,7 @@ ExpressOAuthServer.prototype.token = function(options) {
         return handleResponse(req, res, response);
       })
       .catch(function(e) {
-        return handleError(e, req, res, response);
+        return handleError(e, req, res, response, next);
       });
   };
 };
@@ -131,16 +131,21 @@ var handleResponse = function(req, res, response) {
  * Handle error.
  */
 
-var handleError = function(e, req, res, response) {
-  if (response) {
-    res.set(response.headers);
-  }
+var handleError = function(e, req, res, response, next) {
 
-  if (e instanceof UnauthorizedRequestError) {
-  	res.status(e.code);
-  }
+  if (this.useErrorHandler === true) {
+    next(e);
+  } else {
+    if (response) {
+      res.set(response.headers);
+    }
 
-  res.status(e.code || 500).send({ error: e.name, error_description: e.message });
+    if (e instanceof UnauthorizedRequestError) {
+      return res.status(e.code);
+    }
+
+    res.status(e.code || 500).send({ error: e.name, error_description: e.message });
+  }
 };
 
 /**
