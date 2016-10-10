@@ -1,4 +1,3 @@
-
 /**
  * Module dependencies.
  */
@@ -20,9 +19,6 @@ function ExpressOAuthServer(options) {
   if (!options.model) {
     throw new InvalidArgumentError('Missing parameter: `model`');
   }
-  
-  this.useErrorHandler = options.useErrorHandler ? true : false;
-  delete options.useErrorHandler;
 
   this.server = new NodeOAuthServer(options);
 }
@@ -35,22 +31,22 @@ function ExpressOAuthServer(options) {
  * (See: https://tools.ietf.org/html/rfc6749#section-7)
  */
 
-ExpressOAuthServer.prototype.authenticate = function(options) {
+ExpressOAuthServer.prototype.authenticate = function (options) {
   var server = this.server;
 
-  return function(req, res, next) {
+  return function (req, res, next) {
     var request = new Request(req);
     var response = new Response(res);
 
     return Promise.bind(this)
-      .then(function() {
+      .then(function () {
         return server.authenticate(request, response, options);
       })
-      .tap(function(token) {
+      .tap(function (token) {
         res.app.locals.oauth = { token: token };
         next();
       })
-      .catch(function(e) {
+      .catch(function (e) {
         return handleError(e, req, res, null, next);
       });
   };
@@ -64,24 +60,24 @@ ExpressOAuthServer.prototype.authenticate = function(options) {
  * (See: https://tools.ietf.org/html/rfc6749#section-3.1)
  */
 
-ExpressOAuthServer.prototype.authorize = function(options) {
+ExpressOAuthServer.prototype.authorize = function (options) {
   var server = this.server;
 
-  return function(req, res, next) {
+  return function (req, res, next) {
     var request = new Request(req);
     var response = new Response(res);
 
     return Promise.bind(this)
-      .then(function() {
+      .then(function () {
         return server.authorize(request, response, options);
       })
-      .tap(function(code) {
+      .tap(function (code) {
         res.app.locals.oauth = { code: code };
       })
-      .then(function() {
+      .then(function () {
         return handleResponse(req, res, response);
       })
-      .catch(function(e) {
+      .catch(function (e) {
         return handleError(e, req, res, response);
       });
   };
@@ -95,24 +91,24 @@ ExpressOAuthServer.prototype.authorize = function(options) {
  * (See: https://tools.ietf.org/html/rfc6749#section-3.2)
  */
 
-ExpressOAuthServer.prototype.token = function(options) {
+ExpressOAuthServer.prototype.token = function (options) {
   var server = this.server;
 
-  return function(req, res, next) {
+  return function (req, res, next) {
     var request = new Request(req);
     var response = new Response(res);
 
     return Promise.bind(this)
-      .then(function() {
+      .then(function () {
         return server.token(request, response, options);
       })
-      .tap(function(token) {
+      .tap(function (token) {
         res.app.locals.oauth = { token: token };
       })
-      .then(function() {
+      .then(function () {
         return handleResponse(req, res, response);
       })
-      .catch(function(e) {
+      .catch(function (e) {
         return handleError(e, req, res, response, next);
       });
   };
@@ -122,7 +118,7 @@ ExpressOAuthServer.prototype.token = function(options) {
  * Handle response.
  */
 
-var handleResponse = function(req, res, response) {
+var handleResponse = function (req, res, response) {
   res.set(response.headers);
   res.status(response.status).send(response.body);
 };
@@ -131,21 +127,15 @@ var handleResponse = function(req, res, response) {
  * Handle error.
  */
 
-var handleError = function(e, req, res, response, next) {
-
-  if (this.useErrorHandler === true) {
-    next(e);
-  } else {
+var handleError = function (e, req, res, response, next) {
+  if (e instanceof UnauthorizedRequestError) {
     if (response) {
       res.set(response.headers);
     }
-
-    if (e instanceof UnauthorizedRequestError) {
-      return res.status(e.code);
-    }
-
-    res.status(e.code || 500).send({ error: e.name, error_description: e.message });
+    return res.status(e.code).send({ error: e.name, error_description: e.message });
   }
+
+  next(e, req, res, response, next);
 };
 
 /**
